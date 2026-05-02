@@ -37,7 +37,7 @@ class TlsIssueBuilder(private val api: MontoyaApi) {
         val detail = sanitizeHtml("""
             ${finding.descriptionHtml}
             $refsHtml
-            <p><i>Detected by SafebyteAI TLS Audit Scanner — id=${escapeHtml(finding.id)}</i></p>
+            <p><i>Detected by TLS Inspector — id=${escapeHtml(finding.id)}</i></p>
         """.trimIndent())
 
         val remediation = sanitizeHtml(
@@ -61,7 +61,7 @@ class TlsIssueBuilder(private val api: MontoyaApi) {
     }
 
     private fun buildBackgroundHtml(): String =
-        "<p>This finding was produced by SafebyteAI's TLS Audit Scanner. " +
+        "<p>This finding was produced by TLS Inspector. " +
         "It evaluates the TLS configuration of the target endpoint against known cryptographic " +
         "vulnerabilities, certificate hygiene issues, and published compliance baselines " +
         "(Mozilla SSL Configuration, PCI DSS 4.0, NIST SP 800-52r2, ENISA / ETSI TS 119 312).</p>"

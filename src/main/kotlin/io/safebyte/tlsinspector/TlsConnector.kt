@@ -227,7 +227,7 @@ class TlsConnector(private val ctx: ProbeContext) {
                 ctx.budget.handshakeTimeout.toMillis().toInt()
             )
 
-            val client = SafebyteTlsClient(params)
+            val client = InspectorTlsClient(params)
             protocol = TlsClientProtocol(socket.getInputStream(), socket.getOutputStream())
 
             try {
@@ -427,7 +427,7 @@ class TlsConnector(private val ctx: ProbeContext) {
     /**
      * Inner client class — exposes negotiated state after handshake.
      */
-    private inner class SafebyteTlsClient(
+    private inner class InspectorTlsClient(
         private val params: HandshakeParams
     ) : DefaultTlsClient(BcTlsCrypto(SecureRandom())) {
 
