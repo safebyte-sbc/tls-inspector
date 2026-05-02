@@ -82,7 +82,7 @@ class Lucky13Probe : TlsProbe {
                 "particularly on TLS 1.0/1.1 which should be disabled entirely.</p>",
             references = listOf(
                 "https://nvd.nist.gov/vuln/detail/CVE-2013-0169",
-                "http://www.isg.rhul.ac.uk/tls/Lucky13.html",
+                "https://www.isg.rhul.ac.uk/tls/Lucky13.html",
             )
         )
         result.findings.add(finding)
