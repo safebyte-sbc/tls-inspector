@@ -5,8 +5,8 @@ import io.safebyte.tlsinspector.TlsConfidence
 import io.safebyte.tlsinspector.TlsScanResult
 import io.safebyte.tlsinspector.TlsSeverity
 import io.safebyte.tlsinspector.reporting.TlsFinding
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.eclipsesource.json.Json
+import com.eclipsesource.json.JsonValue
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -29,8 +29,6 @@ class CtLogProbe : TlsProbe {
     override val id = "CT_LOG"
     override val displayName = "Certificate Transparency Log Query (crt.sh)"
     override val kind = ProbeKind.INFORMATIONAL
-
-    private val mapper = jacksonObjectMapper()
 
     /**
      * Internal/special-use TLDs (RFC 6761 + draft-ietf-dnsop-private-use-tld + common practice).
@@ -129,8 +127,15 @@ class CtLogProbe : TlsProbe {
             val leafSha256 = result.leafCertificate?.sha256Fingerprint?.uppercase()
 
             for (entry in entries) {
-                val nameValue = entry.get("name_value")?.asText() ?: continue
-                val fingerprint = entry.get("id")?.asText()
+                val obj = entry.takeIf { it.isObject }?.asObject() ?: continue
+                val nameValue = obj.getString("name_value", null) ?: continue
+                val fingerprint = obj.get("id")?.let { v ->
+                    when {
+                        v.isString -> v.asString()
+                        v.isNumber -> v.toString()
+                        else -> null
+                    }
+                }
 
                 // crt.sh returns multiple names per entry (newline-separated)
                 nameValue.split('\n').forEach { name ->
@@ -189,14 +194,14 @@ class CtLogProbe : TlsProbe {
         }
     }
 
-    private fun queryCtSh(url: String, connectTimeoutMs: Int, readTimeoutMs: Int): List<JsonNode> {
+    private fun queryCtSh(url: String, connectTimeoutMs: Int, readTimeoutMs: Int): List<JsonValue> {
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = connectTimeoutMs
         conn.readTimeout = readTimeoutMs
         conn.instanceFollowRedirects = true
         conn.setRequestProperty("Accept", "application/json")
         conn.setRequestProperty("Accept-Encoding", "gzip")
-        conn.setRequestProperty("User-Agent", "SafebyteAI-TLS-Scanner/1.0 (+https://safebyte.io)")
+        conn.setRequestProperty("User-Agent", "TLS-Inspector/1.0 (+https://github.com/safebyte-sbc/tls-inspector)")
         conn.setRequestProperty("Connection", "close")
         if (conn.responseCode != 200) return emptyList()
         val raw = conn.inputStream.use { it.readBytes() }
@@ -206,8 +211,8 @@ class CtLogProbe : TlsProbe {
         } else raw
         val body = decoded.toString(Charsets.UTF_8)
         if (body.isBlank() || body == "null" || body == "[]") return emptyList()
-        val root = mapper.readTree(body)
-        return if (root.isArray) root.toList() else emptyList()
+        val root = Json.parse(body)
+        return if (root.isArray) root.asArray().toList() else emptyList()
     }
 
     /**

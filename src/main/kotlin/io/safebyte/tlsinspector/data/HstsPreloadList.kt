@@ -1,16 +1,13 @@
 package io.safebyte.tlsinspector.data
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import com.eclipsesource.json.Json
 
 /**
  * Bundled HSTS preload list loader.
  *
- * **Gap (to be resolved in MS E):** This bundled subset contains ~75 well-known entries.
+ * **Gap:** This bundled subset contains ~75 well-known entries.
  * The full Chromium preload list has ~150K entries and is updated several times per week.
- * Full list deferred to MS E where it will be fetched and cached at startup time from
+ * Future work: fetch and cache the full list at startup from
  * https://www.chromium.org/hsts/preload-list/hstspreload.h or the JSON API at
  * https://hstspreload.org/api/v2/entries.
  *
@@ -18,27 +15,20 @@ import com.fasterxml.jackson.module.kotlin.readValue
  */
 object HstsPreloadList {
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private data class HstsEntry(
-        @JsonProperty("name") val name: String,
-        @JsonProperty("include_subdomains") val includeSubdomains: Boolean = false
-    )
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private data class HstsPreloadRoot(
-        @JsonProperty("entries") val entries: List<HstsEntry> = emptyList()
-    )
-
-    private val mapper = jacksonObjectMapper()
-
     /** Map from domain → include_subdomains flag. Loaded once at first access. */
     val entries: Map<String, Boolean> by lazy {
         try {
             val resource = HstsPreloadList::class.java.classLoader
                 .getResourceAsStream("tls/hsts-preload.json")
                 ?: error("tls/hsts-preload.json not found in classpath")
-            val root: HstsPreloadRoot = resource.use { mapper.readValue(it) }
-            root.entries.associate { it.name to it.includeSubdomains }
+            resource.bufferedReader(Charsets.UTF_8).use { reader ->
+                val root = Json.parse(reader).asObject()
+                val list = root.get("entries")?.asArray() ?: return@use emptyMap<String, Boolean>()
+                list.associate { v ->
+                    val o = v.asObject()
+                    o.getString("name", "") to (o.getBoolean("include_subdomains", false))
+                }
+            }
         } catch (e: Exception) {
             emptyMap()
         }
@@ -47,10 +37,9 @@ object HstsPreloadList {
     /**
      * Check if [domain] is in the preload list.
      *
-     * @param domain The hostname to check (e.g. "api.github.com" or "github.com").
      * @return [PreloadStatus.InList] if the domain itself or a parent with include_subdomains=true
      *         is in the list; [PreloadStatus.NotInList] otherwise. Note that a [PreloadStatus.NotInList]
-     *         result is inconclusive for the bundled subset — check [PreloadStatus.BundledSubsetOnly].
+     *         result is inconclusive for the bundled subset — check [PreloadStatus.NotInList.bundledSubsetOnly].
      */
     fun check(domain: String): PreloadStatus {
         // Exact match

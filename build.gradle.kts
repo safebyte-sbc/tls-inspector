@@ -16,8 +16,9 @@ dependencies {
     // Burp Montoya API — provided at runtime by Burp itself
     compileOnly("net.portswigger.burp.extensions:montoya-api:2025.12")
 
-    // Jackson — JSON resource parsing (cipher suites, weak primes, HSTS preload)
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
+    // minimal-json — tiny (33 KB) JSON parser for resource files + crt.sh responses.
+    // Avoids Jackson + its transitive kotlin-reflect + bytebuddy (~14 MB combined).
+    implementation("com.eclipsesource.minimal-json:minimal-json:0.9.5")
 
     // BouncyCastle 1.79 — TLS handshake control + X.509 parsing.
     // Relocated to avoid clash with Burp's bundled BC provider.

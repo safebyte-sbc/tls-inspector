@@ -1,7 +1,6 @@
 package io.safebyte.tlsinspector
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import com.eclipsesource.json.Json
 
 /**
  * Catalog of well-known weak Diffie-Hellman primes.
@@ -16,15 +15,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
  *  - RFC 5114 Groups 22/23 — later MODP groups with small subgroups (Bleichenbacher
  *    small-subgroup attack surface).
  *  - 512-bit DHE_EXPORT prime identified by the Logjam researchers.
- *
- * Usage:
- * ```kotlin
- * val dhParams = HandshakeParser(responseBytes).parseDhServerKeyExchange()
- * if (dhParams != null) {
- *     val entry = WeakDhPrimes.lookup(dhParams.sha256Hex)
- *     if (entry != null) { /* known weak prime */ }
- * }
- * ```
  */
 object WeakDhPrimes {
 
@@ -44,10 +34,19 @@ object WeakDhPrimes {
     )
 
     private val all: List<Entry> by lazy {
-        val mapper = jacksonObjectMapper()
         val stream = javaClass.getResourceAsStream("/tls/weak-dh-primes.json")
             ?: error("weak-dh-primes.json not in resources — check the JAR build")
-        mapper.readValue(stream)
+        stream.bufferedReader(Charsets.UTF_8).use { reader ->
+            Json.parse(reader).asArray().map { v ->
+                val o = v.asObject()
+                Entry(
+                    label = o.getString("label", ""),
+                    sizeBits = o.getInt("sizeBits", 0),
+                    sha256 = o.getString("sha256", ""),
+                    source = o.getString("source", "")
+                )
+            }
+        }
     }
 
     private val bySha: Map<String, Entry> by lazy {
