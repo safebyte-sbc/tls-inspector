@@ -1,0 +1,32 @@
+[
+  {
+    "label": "RFC 2409 Group 2 (well-known IPSec MODP-1024)",
+    "sizeBits": 1024,
+    "sha256": "3f35a3f5f6c4376a744acad409bb22f8d897f949d2311d885adaa890981b67a0",
+    "source": "https://www.rfc-editor.org/rfc/rfc2409#section-6.2"
+  },
+  {
+    "label": "RFC 2409 Group 1 (768-bit MODP)",
+    "sizeBits": 768,
+    "sha256": "b52ba6a3026520a6c49d37e4587601801bee500123b3259b6bf03e7cecc3e63d",
+    "source": "https://www.rfc-editor.org/rfc/rfc2409#section-6.1"
+  },
+  {
+    "label": "RFC 5114 Group 22 (1024-bit MODP with 160-bit subgroup)",
+    "sizeBits": 1024,
+    "sha256": "44c55cfee5c075927cf682da5b681bdecbd5c3eb0784c14f5dce7610f0ef133d",
+    "source": "https://www.rfc-editor.org/rfc/rfc5114#section-2.1"
+  },
+  {
+    "label": "RFC 5114 Group 23 (2048-bit MODP with 224-bit subgroup, weak parameters)",
+    "sizeBits": 2048,
+    "sha256": "53bfb34aae633058f8e6e3ad933d761dee6c26398597471e740cf81672016e21",
+    "source": "https://www.rfc-editor.org/rfc/rfc5114#section-2.2"
+  },
+  {
+    "label": "Logjam well-known export-grade 512-bit prime (DHE_EXPORT)",
+    "sizeBits": 512,
+    "sha256": "f26e2403f3f07946654404909f0ff81d9354de17250411b4c04b89af73178425",
+    "source": "https://weakdh.org/"
+  }
+]
